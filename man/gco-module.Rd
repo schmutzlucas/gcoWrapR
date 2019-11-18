@@ -6,23 +6,23 @@
 }
 \description{
 	Rcpp module, \code{gco}, to expose the class \code{GCoptimizationGridGraph} from the C++ library GCO.
-	This class allows to do MRF optimization based on GraphCut using either alpha-beta swap or alpha expension.
+	This class allows to do MRF optimization based on GraphCut using either alpha-beta swap or alpha expansion.
 }
 \details{
 	The module exposes the \code{GCoptimizationGridGraph} class.
 	The following methods are made available:
   \describe{
-        \item{constructor(int, int , int)}{
+        \item{constructor(int width, int height , int nlabels)}{
 
-          construct a graph  a on regular (four neighbour) graph.
+          construct a graph  a on regular (four neighbour) grid.
 
           It takes as arguments the width, the height of the grid and the number of possible labels.
 
-          Each node is identified with respect to an index system. The indice of a node (i, j), i = 1:width, j = 1:height is (i - 1 ) + width * (j - 1)
+          Each node is identified with respect to an index system. The indice of a node (i, j), i = 0:(width-1), j = 0:(height-1) is (i + width * j )
         }
-        \item{setDataCost(SEXP, Rcpp::List)}{
+        \item{setDataCost(SEXP Xptrt, Rcpp::List extraData)}{
 
-          sets the Data cost term of the engery of the MRF.
+          sets the smooth cost term of the energy of the MRF.
 
           It takes as arguments
 
@@ -31,15 +31,17 @@
 
               float (*DataCostFnExtra)(int s1,  int l1,  Rcpp::List extraData)
 
-              with s1 the index of the node, l1 its label.
+              with s1 the index of the node, l1 its label index.
+              C-style indexing style is used, i.e. the first index starts at 0.
+              Such a pointer can be created with the package \code{RcppXPtrUtils}, as shown in the example.
 
-              \item a list ExtraData from which the C++ function DataCostFnExtra takes the data it needs
+              \item a list extraData from which the C++ function DataCostFnExtra takes the data it needs
             }
         }
 
-        \item{setDataCost(SEXP, Rcpp::List)}{
+        \item{setSmoothCost(SEXP Xptr, Rcpp::List extraData)}{
 
-          sets the Data cost term of the engery of the MRF.
+          sets the smooth cost term of the engery of the MRF.
 
           It takes as arguments:
           \itemize{
@@ -47,12 +49,14 @@
 
             float (*SmoothCostFnExtra)(int s1, int s2, int l1, int l2, Rcpp::List extraData)
 
-            with s1, s2 the indexes of the nodes and  l1,  l2 thier corresponding its labels.
+            with s1, s2 the indexes of the nodes and  l1,  l2 thier corresponding its label indexes.
+            C-style indexing style is used, i.e. the first index starts at  0.
+            Such a pointer can be created with the package \code{RcppXPtrUtils}, as shown in the example.
 
-            \item a list ExtraData from which the C++ function DataCostFnExtra takes the data it needs
+            \item a list extraData from which the C++ function DataCostFnExtra takes the data it needs
           }
         }
-        \item{setLabel(int, int)}{
+        \item{setLabel(int s1, int l1)}{
 
           sets the node s1 with label l1.
 
@@ -64,7 +68,7 @@
           \code{setLabels} can be used to initialize labels before the optimization.
           By default, all the labels are set to zero.
         }
-        \item{whatLabel(int)}{
+        \item{whatLabel(int s1)}{
 
           returns the current label of a  node s1.
 
@@ -85,14 +89,14 @@
 
           It takes no argument.
         }
-        \item{expansion(int)}{
+        \item{expansion(int maxiter)}{
           performs the MRF optimization by alpha expansion.
 
           It takes as parameter the number of maximum iterations.
 
           If set to -1, optimization is done until convergence.
         }
-        \item{swap(int)}{
+        \item{swap(int maxiter)}{
           performs the MRF optimization by alpha-beta swap.
 
           It takes as parameter the number of maximum iterations.
@@ -175,8 +179,9 @@
     cat("\n")
   }
   # Optimizing the MRF energy with alpha-beta swap
-  # gco$expansion(-1)
   gco$swap(-1)
+  # For alpha expansion, use:
+  # gco$expansion(-1)
   cat("energy after optimization: ", gco$compute_energy(), "\n with labels: \n")
   for(j in 1:height){
     for(i in 1:width){
