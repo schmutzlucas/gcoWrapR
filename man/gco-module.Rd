@@ -79,12 +79,12 @@
 
           It takes no argument.
         }
-        \item{giveDataDenergy()}{
+        \item{giveDataEnergy()}{
           returns the data term of the MRF energy given its current labels.
 
           It takes no argument.
         }
-        \item{giveSmoothDenergy()}{
+        \item{giveSmoothEnergy()}{
           return the smooth term of the MRF energy given its current labels.
 
           It takes no argument.
