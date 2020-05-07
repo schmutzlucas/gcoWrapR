@@ -153,7 +153,7 @@
   {
     int numPix = extraData["numPix"];
     NumericVector data = extraData["data"];
-    return( 1.0 * pow(data[p + numPix * l], 2) );
+    return( 1.0 * std::pow(data[p + numPix * l], 2) );
   }',
     includes = c("#include <math.h>", "#include <Rcpp.h>")
   )
@@ -162,8 +162,8 @@
   {
     int numPix = extraData["numPix"];
     NumericVector data = extraData["data"];
-    float cost = abs(data[p1 + numPix * l1]-data[p1 + numPix * l2])
-    + abs(data[p2 + numPix * l1] - data[p2 + numPix * l2]) ;
+    float cost = std::abs(data[p1 + numPix * l1]-data[p1 + numPix * l2])
+    + std::abs(data[p2 + numPix * l1] - data[p2 + numPix * l2]) ;
     return(0.5 * cost);
   }',
     includes = c("#include <math.h>", "#include <Rcpp.h>")
