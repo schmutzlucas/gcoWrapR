@@ -1534,28 +1534,38 @@ void GCoptimizationGridGraph::giveNeighborInfo(SiteID site, SiteID *numSites, Si
 
 //-------------------------------------------------------------------
 
-void GCoptimizationGridGraph::computeNeighborWeights(EnergyTermType *vCosts,EnergyTermType *hCosts)
+void GCoptimizationGridGraph::computeNeighborWeights(EnergyTermType *vCosts, EnergyTermType *hCosts)
 {
-	SiteID i,n,nSite;
-	GCoptimization::EnergyTermType weight;
+    SiteID i, n, nSite;
+    GCoptimization::EnergyTermType weight;
 
-	m_neighborsWeights = new EnergyTermType[m_num_sites*4];
+    m_neighborsWeights = new EnergyTermType[m_num_sites * 4];
 
-	for ( i = 0; i < m_num_sites; i++ )
-	{
-		for ( n = 0; n < m_numNeighbors[i]; n++ )
-		{
-			nSite = m_neighbors[4*i+n];
-			if ( i-nSite == 1 )            weight = hCosts[nSite];
-			else if (i-nSite == -1 )       weight = hCosts[i];
-			else if ( i-nSite == m_width ) weight = vCosts[nSite];
-			else if (i-nSite == -m_width ) weight = vCosts[i];
+    for ( i = 0; i < m_num_sites; i++ )
+    {
+        for ( n = 0; n < m_numNeighbors[i]; n++ )
+        {
+            nSite = m_neighbors[4 * i + n];
+            if ( i - nSite == 1 )
+                weight = hCosts[nSite];
+            else if ( i - nSite == -1 )
+                weight = hCosts[i];
+            else if ( i - nSite == m_width )
+                weight = vCosts[nSite];
+            else if ( i - nSite == -m_width )
+                weight = vCosts[i];
+            else if ( i - nSite == m_width - 1 )
+                weight = hCosts[nSite]; // right-border neighbor’s wrapped neighbor (to the left)
+            else if ( i - nSite == -(m_width - 1) )
+                weight = hCosts[i];     // left-border neighbor’s wrapped neighbor (to the right)
+            else
+                weight = 1;  // fallback (should not occur if all neighbors are valid)
 
-			m_neighborsWeights[i*4+n] = weight;
-		}
-	}
-
+            m_neighborsWeights[i * 4 + n] = weight;
+        }
+    }
 }
+
 ////////////////////////////////////////////////////////////////////////////////////////////////
 // Functions for the GCoptimizationGeneralGraph, derived from GCoptimization
 ////////////////////////////////////////////////////////////////////////////////////////////////////
