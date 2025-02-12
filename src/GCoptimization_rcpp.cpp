@@ -1410,7 +1410,7 @@ GCoptimizationGridGraph::GCoptimizationGridGraph(SiteID width, SiteID height, La
 	: GCoptimization(width*height, num_labels)
 {
     assert((width > 1) && (height > 1) && (num_labels > 1));
-    printf("BADBABE")
+    printf("BADBABE");
 
     m_weightedGraph = 0;
     for (int i = 0; i < 4; i++) 
