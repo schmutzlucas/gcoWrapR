@@ -1406,44 +1406,73 @@ void GCoptimization::alpha_beta_swap(LabelID alpha_label, LabelID beta_label)
 // Functions for the GCoptimizationGridGraph, derived from GCoptimization
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-GCoptimizationGridGraph::GCoptimizationGridGraph(SiteID width, SiteID height,LabelID num_labels)
-						:GCoptimization(width*height,num_labels)
+GCoptimizationGridGraph::GCoptimizationGridGraph(SiteID width, SiteID height, LabelID num_labels)
+	: GCoptimization(width*height, num_labels)
 {
-	assert( (width > 1) && (height > 1) && (num_labels > 1 ));
+    assert((width > 1) && (height > 1) && (num_labels > 1));
 
-	m_weightedGraph = 0;
-	for (int  i = 0; i < 4; i ++ )	m_unityWeights[i] = 1;
+    m_weightedGraph = 0;
+    for (int i = 0; i < 4; i++) 
+        m_unityWeights[i] = 1;
 
-	m_width  = width;
-	m_height = height;
+    m_width  = width;
+    m_height = height;
 
-	m_numNeighbors = new SiteID[m_num_sites];
-	m_neighbors = new SiteID[4*m_num_sites];
+    m_numNeighbors = new SiteID[m_num_sites];
+    m_neighbors    = new SiteID[4 * m_num_sites];
 
-	SiteID indexes[4] = {-1,1,-m_width,m_width};
+    // Offsets for an interior pixel (4 neighbors)
+    SiteID indexes[4] = { -1, 1, -m_width, m_width };
 
-	SiteID indexesL[3] = {1,-m_width,m_width};
-	SiteID indexesR[3] = {-1,-m_width,m_width};
-	SiteID indexesU[3] = {1,-1,m_width};
-	SiteID indexesD[3] = {1,-1,-m_width};
+    // For the left border (col 0) we now add the wrapped left neighbor.
+    // For a pixel at (row,0) the wrapped left neighbor is at offset (m_width-1).
+    // (The other three neighbors are: right (offset 1), up (offset -m_width), down (offset m_width).)
+    SiteID indexesL[4] = { 1, m_width - 1, -m_width, m_width };
 
-	SiteID indexesUL[2] = {1,m_width};
-	SiteID indexesUR[2] = {-1,m_width};
-	SiteID indexesDL[2] = {1,-m_width};
-	SiteID indexesDR[2] = {-1,-m_width};
+    // For the right border (col m_width-1) we add the wrapped right neighbor.
+    // For a pixel at (row, m_width-1) the wrapped right neighbor is at offset -(m_width-1).
+    // (The other three neighbors are: left (offset -1), up (offset -m_width), down (offset m_width).)
+    SiteID indexesR[4] = { -1, -(m_width - 1), -m_width, m_width };
 
-	setupNeighbData(1,m_height-1,1,m_width-1,4,indexes);
+    // Top and bottom borders remain unchanged.
+    SiteID indexesU[3] = { 1, -1, m_width };   // top border (row 0): right, left, down
+    SiteID indexesD[3] = { 1, -1, -m_width };  // bottom border (row m_height-1): right, left, up
 
-	setupNeighbData(1,m_height-1,0,1,3,indexesL);
-	setupNeighbData(1,m_height-1,m_width-1,m_width,3,indexesR);
-	setupNeighbData(0,1,1,width-1,3,indexesU);
-	setupNeighbData(m_height-1,m_height,1,m_width-1,3,indexesD);
+    // Now update the 4 corners.
+    // Top-left corner (row 0, col 0): normally gets right (offset 1) and down (offset m_width).
+    // We now also add the left (wrapped) neighbor: offset (m_width-1).
+    SiteID indexesUL[3] = { 1, m_width, m_width - 1 };
 
-	setupNeighbData(0,1,0,1,2,indexesUL);
-	setupNeighbData(0,1,m_width-1,m_width,2,indexesUR);
-	setupNeighbData(m_height-1,m_height,0,1,2,indexesDL);
-	setupNeighbData(m_height-1,m_height,m_width-1,m_width,2,indexesDR);
+    // Top-right corner (row 0, col m_width-1): normally gets left (offset -1) and down (offset m_width).
+    // We add the right (wrapped) neighbor: offset -(m_width-1).
+    SiteID indexesUR[3] = { -1, m_width, -(m_width - 1) };
+
+    // Bottom-left corner (row m_height-1, col 0): normally gets right (offset 1) and up (offset -m_width).
+    // We add the left (wrapped) neighbor: offset (m_width-1).
+    SiteID indexesDL[3] = { 1, -m_width, m_width - 1 };
+
+    // Bottom-right corner (row m_height-1, col m_width-1): normally gets left (offset -1) and up (offset -m_width).
+    // We add the right (wrapped) neighbor: offset -(m_width-1).
+    SiteID indexesDR[3] = { -1, -m_width, -(m_width - 1) };
+
+    // Setup interior pixels (all 4 neighbors)
+    setupNeighbData(1, m_height - 1, 1, m_width - 1, 4, indexes);
+
+    // Setup left/right border pixels (with 4 neighbors now)
+    setupNeighbData(1, m_height - 1, 0, 1, 4, indexesL);
+    setupNeighbData(1, m_height - 1, m_width - 1, m_width, 4, indexesR);
+
+    // Setup top and bottom borders (unchanged: 3 neighbors)
+    setupNeighbData(0, 1, 1, m_width - 1, 3, indexesU);
+    setupNeighbData(m_height - 1, m_height, 1, m_width - 1, 3, indexesD);
+
+    // Setup corners with the additional horizontal neighbor.
+    setupNeighbData(0, 1, 0, 1, 3, indexesUL);
+    setupNeighbData(0, 1, m_width - 1, m_width, 3, indexesUR);
+    setupNeighbData(m_height - 1, m_height, 0, 1, 3, indexesDL);
+    setupNeighbData(m_height - 1, m_height, m_width - 1, m_width, 3, indexesDR);
 }
+
 
 //-------------------------------------------------------------------
 
