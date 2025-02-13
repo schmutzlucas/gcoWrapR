@@ -1411,7 +1411,7 @@ GCoptimizationGridGraph::GCoptimizationGridGraph(SiteID width, SiteID height, La
 {
     assert((width > 1) && (height > 1) && (num_labels > 1));
 
-    m_weightedGraph = 1;
+    m_weightedGraph = 0;
     for (int i = 0; i < 4; i++) 
         m_unityWeights[i] = 1;
 
